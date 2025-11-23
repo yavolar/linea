@@ -2,23 +2,477 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Dashboard LA · PWA</title>
+  <title>Línea Automática · Dashboard híbrido</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#020617">
-  <link rel="manifest" href="manifest.json">
   <style>
-    body { background:#020617; color:#e5e7eb; font-family:system-ui; padding:2rem; }
-    h1 { font-size:1.4rem; }
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color-scheme: dark;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      display: flex;
+      min-height: 100vh;
+      background: #020617;
+      color: #e5e7eb;
+    }
+    .sidebar {
+      width: 64px;
+      background: #020617;
+      border-right: 1px solid #1e293b;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0.75rem 0.4rem;
+      gap: 0.75rem;
+    }
+    .logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      border: 2px solid #22c55e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: #22c55e;
+      margin-bottom: 0.5rem;
+      font-size: 0.8rem;
+    }
+    .nav-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      color: #64748b;
+      cursor: pointer;
+    }
+    .nav-icon.active {
+      background: rgba(34,197,94,0.18);
+      color: #22c55e;
+    }
+    .nav-icon:hover {
+      background: #0f172a;
+    }
+    .sidebar-bottom {
+      margin-top: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: radial-gradient(circle at top left, #0f172a, #020617 50%, #000 100%);
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1.1rem;
+      border-bottom: 1px solid #1e293b;
+      backdrop-filter: blur(12px);
+      background: rgba(15,23,42,0.8);
+    }
+    .top-title {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+    .top-title h1 {
+      font-size: 1.1rem;
+      margin: 0;
+    }
+    .top-title span {
+      font-size: 0.8rem;
+      color: #9ca3af;
+    }
+    .top-controls {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      font-size: 0.8rem;
+    }
+    .pill {
+      padding: 0.25rem 0.6rem;
+      border-radius: 999px;
+      background: #020617;
+      border: 1px solid #1e293b;
+      color: #e5e7eb;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      cursor: default;
+    }
+    .pill-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #22c55e;
+    }
+    .btn-ghost {
+      padding: 0.35rem 0.7rem;
+      border-radius: 999px;
+      border: 1px solid #334155;
+      background: transparent;
+      color: #e5e7eb;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .btn-ghost:hover {
+      background: #020617;
+    }
+
+    .content {
+      flex: 1;
+      padding: 0.9rem 1.1rem 1.2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 0.75rem;
+    }
+    @media (max-width: 900px) {
+      .kpi-grid {
+        grid-template-columns: repeat(2, minmax(0,1fr));
+      }
+    }
+    @media (max-width: 600px) {
+      body {
+        flex-direction: column;
+      }
+      .sidebar {
+        flex-direction: row;
+        width: 100%;
+        height: 56px;
+        border-right: none;
+        border-bottom: 1px solid #1e293b;
+        justify-content: center;
+      }
+      .sidebar-bottom {
+        margin-top: 0;
+        margin-left: auto;
+        flex-direction: row;
+      }
+      .main {
+        flex: none;
+      }
+    }
+
+    .kpi-card {
+      border-radius: 0.9rem;
+      padding: 0.8rem;
+      background: radial-gradient(circle at top, #0b1120, #020617);
+      border: 1px solid #1f2937;
+      box-shadow: 0 14px 30px rgba(0,0,0,0.45);
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      min-height: 86px;
+    }
+    .kpi-label {
+      font-size: 0.8rem;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .kpi-value {
+      font-size: 1.6rem;
+      font-weight: 700;
+    }
+    .kpi-trend {
+      font-size: 0.8rem;
+      color: #22c55e;
+    }
+    .kpi-trend.down {
+      color: #f97316;
+    }
+
+    .lower-grid {
+      display: grid;
+      grid-template-columns: minmax(0,1.3fr) minmax(0,1fr);
+      gap: 0.9rem;
+      height: 100%;
+      min-height: 260px;
+    }
+    @media (max-width: 900px) {
+      .lower-grid {
+        grid-template-columns: minmax(0,1fr);
+      }
+    }
+
+    .panel {
+      border-radius: 1rem;
+      background: #020617;
+      border: 1px solid #1f2937;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.55);
+      padding: 0.8rem 0.9rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      overflow: hidden;
+    }
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      color: #9ca3af;
+    }
+    .panel-title {
+      font-weight: 600;
+      color: #e5e7eb;
+    }
+    .panel-body {
+      flex: 1;
+      min-height: 180px;
+      position: relative;
+    }
+    canvas {
+      width: 100%;
+      height: 220px;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+    .table thead {
+      background: #020617;
+    }
+    .table th, .table td {
+      padding: 0.4rem 0.2rem;
+      text-align: left;
+      border-bottom: 1px solid #111827;
+    }
+    .table th {
+      font-weight: 500;
+      color: #9ca3af;
+    }
+    .table tr:nth-child(even) td {
+      background: #020617;
+    }
+    .tag {
+      padding: 0.1rem 0.45rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      background: rgba(34,197,94,0.15);
+      color: #22c55e;
+    }
+    .tag.warn {
+      background: rgba(249,115,22,0.15);
+      color: #f97316;
+    }
+    .tag.err {
+      background: rgba(248,113,113,0.2);
+      color: #fca5a5;
+    }
   </style>
 </head>
 <body>
-  <h1>PWA Lista para GitHub Pages</h1>
-  <p>Si ves esta página desde HTTPS, podrás instalarla como App en iPhone/Android.</p>
+  <aside class="sidebar">
+    <div class="logo">LA</div>
+    <div class="nav-icon active">🏭</div>
+    <div class="nav-icon">📈</div>
+    <div class="nav-icon">🧮</div>
+    <div class="nav-icon">⚙️</div>
+    <div class="sidebar-bottom">
+      <div class="nav-icon">❔</div>
+      <div class="nav-icon">👤</div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="top-title">
+        <h1>Dashboard Línea Automática</h1>
+        <span>Vista general · Datos simulados de prueba</span>
+      </div>
+      <div class="top-controls">
+        <div class="pill">
+          <span class="pill-dot"></span>
+          Línea en marcha
+        </div>
+        <button class="btn-ghost">Turno Mañana</button>
+      </div>
+    </header>
+
+    <main class="content">
+      <section class="kpi-grid">
+        <article class="kpi-card">
+          <div class="kpi-label">OEE</div>
+          <div class="kpi-value">84.3%</div>
+          <div class="kpi-trend">▲ +2.1% vs ayer</div>
+        </article>
+        <article class="kpi-card">
+          <div class="kpi-label">Disponibilidad</div>
+          <div class="kpi-value">78.6%</div>
+          <div class="kpi-trend">▲ +1.4%</div>
+        </article>
+        <article class="kpi-card">
+          <div class="kpi-label">Rendimiento</div>
+          <div class="kpi-value">98.5%</div>
+          <div class="kpi-trend">▲ +0.8%</div>
+        </article>
+        <article class="kpi-card">
+          <div class="kpi-label">Calidad</div>
+          <div class="kpi-value">97.2%</div>
+          <div class="kpi-trend down">▼ -0.3%</div>
+        </article>
+      </section>
+
+      <section class="lower-grid">
+        <article class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Producción por hora</div>
+            <div>Últimas 10 horas · bultos/h</div>
+          </div>
+          <div class="panel-body">
+            <canvas id="chart"></canvas>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Eventos recientes</div>
+            <div>Tramos / alarmas</div>
+          </div>
+          <div class="panel-body">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Hora</th>
+                  <th>Tramo</th>
+                  <th>Evento</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>10:24</td>
+                  <td>T7</td>
+                  <td>Sensor salida bloqueado</td>
+                  <td><span class="tag err">Crítica</span></td>
+                </tr>
+                <tr>
+                  <td>09:58</td>
+                  <td>T3</td>
+                  <td>Tiempo de carga agotado</td>
+                  <td><span class="tag warn">Aviso</span></td>
+                </tr>
+                <tr>
+                  <td>09:12</td>
+                  <td>T9</td>
+                  <td>Caja enviada a FIFO</td>
+                  <td><span class="tag">OK</span></td>
+                </tr>
+                <tr>
+                  <td>08:47</td>
+                  <td>T1</td>
+                  <td>Arranque de tramo</td>
+                  <td><span class="tag">OK</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
 
   <script>
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("service-worker.js");
+    const horas = ["08","09","10","11","12","13","14","15","16","17"];
+    const valores = [28, 32, 35, 33, 40, 42, 38, 36, 34, 33];
+
+    const canvas = document.getElementById("chart");
+    const ctx = canvas.getContext("2d");
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * window.devicePixelRatio;
+      canvas.height = rect.height * window.devicePixelRatio;
+      ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+      dibujar();
     }
+
+    function dibujar() {
+      const w = canvas.width / window.devicePixelRatio;
+      const h = canvas.height / window.devicePixelRatio;
+
+      ctx.clearRect(0, 0, w, h);
+
+      const padding = { top: 16, right: 18, bottom: 32, left: 36 };
+      const chartW = w - padding.left - padding.right;
+      const chartH = h - padding.top - padding.bottom;
+
+      const maxVal = Math.max(...valores) * 1.2;
+
+      ctx.strokeStyle = "#1f2937";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(padding.left, padding.top + chartH);
+      ctx.lineTo(padding.left + chartW, padding.top + chartH);
+      ctx.stroke();
+
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 1;
+      for (let i = 1; i <= 3; i++) {
+        const y = padding.top + chartH - (chartH * i) / 4;
+        ctx.beginPath();
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(padding.left + chartW, y);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = "#9ca3af";
+      ctx.font = "11px system-ui";
+      ctx.textAlign = "center";
+      horas.forEach((hLabel, i) => {
+        const x = padding.left + (chartW / (horas.length - 1)) * i;
+        ctx.fillText(hLabel + "h", x, padding.top + chartH + 18);
+      });
+
+      const pts = valores.map((v, i) => {
+        const x = padding.left + (chartW / (valores.length - 1)) * i;
+        const y = padding.top + chartH - (v / maxVal) * chartH;
+        return { x, y, v };
+      });
+
+      ctx.save();
+      ctx.shadowColor = "rgba(34,197,94,0.6)";
+      ctx.shadowBlur = 16;
+      ctx.beginPath();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "#22c55e";
+      pts.forEach((p, i) => {
+        if (i === 0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+      });
+      ctx.stroke();
+      ctx.restore();
+
+      pts.forEach(p => {
+        ctx.beginPath();
+        ctx.fillStyle = "#22c55e";
+        ctx.arc(p.x, p.y, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
   </script>
 </body>
 </html>
